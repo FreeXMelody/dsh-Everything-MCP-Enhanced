@@ -8,13 +8,27 @@
 
 适用于 Windows [voidtools Everything](https://www.voidtools.com/) 的高性能 Model Context Protocol (MCP) 服务器，专为大模型 Agent 与 DeepSeek-Harness (DSH) 深度定制优化。
 
-### 🌟 核心特性与改进
+### 💡 为什么为大模型 / Agent 接入 Everything MCP？
 
-1. **🚀 突破百条硬限制**：支持单次最高返回 5000 条记录，彻底避免分页往返导致模型上下文崩溃或超时。
-2. **🎯 专属 `path` 参数支持**：模型可直接传入 `path: "D:\\"` 或 `path: "D:\\Projects"`，服务端自动合成为 Everything 高性能语法，杜绝路径被丢弃误搜 C 盘的问题。
-3. **🛡️ 智能噪音过滤 (`exclude_noise: true`)**：默认开启依赖库过滤（自动排除 `node_modules`、`.git`、`.venv`、`dist`、`build`、`__pycache__` 等），让搜索结果从近千个依赖脚本瞬时净化为手写业务文件。
-4. **📉 Token 极致节省 (`format: "compact"`)**：默认采用紧凑单行格式输出绝对路径，相比原始 4 行元数据格式节省 **75% 以上的 Token**。亦可通过 `format: "detailed"` 获取大小与修改时间。
-5. **🔍 智能端口探测**：支持自动扫描 Everything 常用端口（`8011`、`80`、`8080`、`54321`）及读取 `Everything.ini` 配置，开箱即用。
+传统 AI 编程助手在 Windows 环境下查找文件时，通常依赖终端执行 `dir /s`、PowerShell `Get-ChildItem -Recurse` 或 Python 递归扫描。这种传统方式存在致命痛点：
+- **极度耗时 & 易超时**：递归遍历磁盘经常耗时数十秒甚至数分钟，极易触发 MCP / Agent 的执行超时。
+- **严重消耗磁盘 I/O**：海量的小文件随机读取会导致磁盘持续高负载甚至系统卡顿。
+- **盲人摸象**：如果模型不知道文件在哪一盘符或哪级目录，就必须反复多轮探测，严重消耗思考轮数。
+
+**接入 Everything MCP 后的质变**：
+- ⚡ **毫秒级极速检索**：直接读取 Everything 的内存索引数据库（基于 NTFS USN 日志）。面对全盘 **千万级（10,000,000+）** 文件，搜索仅需 **5 ~ 30 毫秒** 即可完成！
+- 🌐 **全盘全局视野**：无需预先猜测目录，跨驱动器瞬时定位代码、配置、脚本或文档，大幅提升 Agent 决策与执行效率。
+- 🍃 **零磁盘 I/O 磨损**：在内存中完成高速模式匹配，不产生密集磁盘读写，保护固态硬盘寿命。
+- 🧩 **大模型专属优化**：结合本增强版提供的**依赖噪音过滤**与**单行紧凑模式**，自动剔除几十万个 `node_modules`/`.venv` 垃圾项，节省 75% 以上的 Token 消耗，让大模型只接收最高价值的上下文信息。
+
+### 🌟 本增强版核心特性
+
+1. **⚡ 毫秒级极速响应**：千万级文件 5~30ms 极速检索，无需等待漫长的递归扫描。
+2. **🚀 突破百条硬限制**：单次最高支持返回 5000 条记录（原生社区版硬编码限 100 条），彻底避免分页往返导致模型上下文崩溃。
+3. **🎯 专属 `path` 参数支持**：模型可直接传入 `path: "D:\\"` 或 `path: "D:\\Projects"`，服务端自动合成为 Everything 高性能语法，杜绝路径被丢弃误搜 C 盘的问题。
+4. **🛡️ 智能噪音过滤 (`exclude_noise: true`)**：默认开启工程依赖过滤（自动排除 `node_modules`、`.git`、`.venv`、`dist`、`build`、`__pycache__` 等），让搜索结果瞬时净化为业务源码文件。
+5. **📉 Token 极致节省 (`format: "compact"`)**：默认采用紧凑单行格式输出绝对路径，相比原始 4 行元数据格式节省 **75% 以上的 Token**。亦可通过 `format: "detailed"` 获取大小与修改时间。
+6. **🔍 智能端口探测**：支持自动扫描 Everything 常用端口（`8011`、`80`、`8080`、`54321`）及读取 `Everything.ini` 配置，开箱即用。
 
 ### 🛠️ 前置条件
 
@@ -90,13 +104,27 @@
 
 High-performance Model Context Protocol (MCP) server for voidtools Everything on Windows, specifically optimized for AI Agents, DeepSeek-Harness (DSH), Claude, and Cursor.
 
-### Key Enhancements
+### 💡 Why Everything MCP for AI Agents?
 
-- **No 100-item hard limit**: supports up to 5,000 items in a single query.
-- **Dedicated `path` parameter**: scopes into folders/drives accurately without query syntax errors.
-- **Smart noise filtering**: automatically excludes `node_modules`, `.git`, `.venv`, etc.
-- **Token-optimized compact format**: 1 line per path, saving 75%+ tokens.
-- **Auto port detection**: probes 8011, 80, 8080, 54321 and reads `Everything.ini`.
+Traditional AI agents on Windows typically search files using commands like `dir /s`, PowerShell `Get-ChildItem -Recurse`, or recursive directory walks. This suffers from major drawbacks:
+- **Painfully slow & error-prone**: Recursive walks through large disks easily take 30+ seconds or time out.
+- **Heavy disk I/O**: Scanning millions of small files degrades system responsiveness and wears down SSDs.
+- **Blind trial-and-error**: Agents waste multiple round-trips guessing folder locations across drives.
+
+**With Everything MCP:**
+- ⚡ **Millisecond-level latency**: Direct access to Everything's memory-indexed database (powered by NTFS USN Journal). Searches across **10,000,000+ files take only 5 ~ 30 ms**!
+- 🌐 **Global instant visibility**: Locate any code, config, or script across all mounted drives in a single shot.
+- 🍃 **Zero disk thrashing**: All matching happens in RAM—no disk I/O bottlenecks.
+- 🧩 **Agent-first enhancements**: Automatic filtering of `node_modules` and virtual environments, plus a 1-line-per-path compact format that cuts token consumption by **over 75%**.
+
+### 🌟 Key Enhancements
+
+- **⚡ Sub-second response**: Instant search across millions of files in 5~30ms.
+- **🚀 No 100-item hard limit**: Supports up to 5,000 items in a single query (or custom limit).
+- **🎯 Dedicated `path` parameter**: Scopes into folders/drives accurately without Everything syntax confusion.
+- **🛡️ Smart noise filtering**: Automatically excludes `node_modules`, `.git`, `.venv`, `dist`, `__pycache__`, etc.
+- **📉 Token-optimized compact format**: 1 line per path, saving 75%+ LLM context tokens.
+- **🔍 Auto port detection**: Probes ports 8011, 80, 8080, 54321 and inspects `Everything.ini`.
 
 ### License
 
